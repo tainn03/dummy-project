@@ -1,0 +1,8 @@
+# Backend Dockerfile for Express.js API
+FROM node:20-alpine
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+COPY . .
+EXPOSE 4000
+CMD ["node", "./src/server/express-server.js"]
