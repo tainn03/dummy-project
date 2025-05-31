@@ -1,23 +1,21 @@
-# Task Manager
+# Task Manager Prototype
 
-A full-stack task management application built with Next.js, Express.js, TypeScript, MySQL, and Redis. The project is designed for modern productivity workflows, supporting user authentication, robust task management, and seamless containerized deployment.
+A client-side task management application prototype built with Next.js and TypeScript. The project is designed to demonstrate modern productivity workflows using mock data, supporting simulated user authentication and robust task management features.
 
 ## Tech Stack
 
 - **Frontend:** Next.js + TypeScript
-- **Backend:** Express.js + Node.js + TypeScript
-- **Database:** MySQL
-- **Session Store:** Redis
-- **Containerization:** Docker + Docker Compose
+- **State Management:** Redux Toolkit
+- **Mock Data:** Client-side simulated API
 
 ## Features
 
-### Backend
+### Mock API Implementation
 
 - **Authentication:**
-  - `POST /auth/login` – Login user
-  - `POST /auth/logout` – Logout user
-  - `PUT /auth/change-password` – Change user password
+  - Mock login functionality
+  - Mock logout functionality
+  - Mock password change functionality
 - **Task Management:**
   - `GET /tasks` – Get all tasks (with filter & sort)
   - `GET /tasks/:id` – Get task detail

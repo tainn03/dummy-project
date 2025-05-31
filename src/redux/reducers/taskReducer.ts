@@ -62,8 +62,10 @@ export const fetchTasks = createAsyncThunk(
   ) => {
     try {
       return await taskApi.getTasks(token, status, sortBy, sortDir);
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to fetch tasks");
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as Error).message || "Failed to fetch tasks"
+      );
     }
   }
 );
@@ -73,8 +75,10 @@ export const fetchTask = createAsyncThunk(
   async ({ id, token }: { id: string; token: string }, { rejectWithValue }) => {
     try {
       return await taskApi.getTask(id, token);
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to fetch task");
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as Error).message || "Failed to fetch task"
+      );
     }
   }
 );
@@ -100,8 +104,10 @@ export const createTask = createAsyncThunk(
       const newTask = await taskApi.createTask(task, token);
       dispatch(fetchTasks({ token }));
       return newTask;
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to create task");
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as Error).message || "Failed to create task"
+      );
     }
   }
 );
@@ -129,8 +135,10 @@ export const updateTask = createAsyncThunk(
       const updatedTask = await taskApi.updateTask(id, task, token);
       dispatch(fetchTasks({ token }));
       return updatedTask;
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to update task");
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as Error).message || "Failed to update task"
+      );
     }
   }
 );
@@ -145,8 +153,10 @@ export const deleteTask = createAsyncThunk(
       await taskApi.deleteTask(id, token);
       dispatch(fetchTasks({ token }));
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to delete task");
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as Error).message || "Failed to delete task"
+      );
     }
   }
 );
@@ -193,9 +203,9 @@ const taskSlice = createSlice({
         state.tasks = action.payload;
         state.error = null;
       })
-      .addCase(fetchTasks.rejected, (state, action: PayloadAction<any>) => {
+      .addCase(fetchTasks.rejected, (state, action: PayloadAction<unknown>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
       // Fetch task
       .addCase(fetchTask.pending, (state) => {
@@ -207,9 +217,9 @@ const taskSlice = createSlice({
         state.currentTask = action.payload;
         state.error = null;
       })
-      .addCase(fetchTask.rejected, (state, action: PayloadAction<any>) => {
+      .addCase(fetchTask.rejected, (state, action: PayloadAction<unknown>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
       // Create task
       .addCase(createTask.pending, (state) => {
@@ -220,9 +230,9 @@ const taskSlice = createSlice({
         state.loading = false;
         state.error = null;
       })
-      .addCase(createTask.rejected, (state, action: PayloadAction<any>) => {
+      .addCase(createTask.rejected, (state, action: PayloadAction<unknown>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
       // Update task
       .addCase(updateTask.pending, (state) => {
@@ -233,9 +243,9 @@ const taskSlice = createSlice({
         state.loading = false;
         state.error = null;
       })
-      .addCase(updateTask.rejected, (state, action: PayloadAction<any>) => {
+      .addCase(updateTask.rejected, (state, action: PayloadAction<unknown>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
       // Delete task
       .addCase(deleteTask.pending, (state) => {
@@ -246,9 +256,9 @@ const taskSlice = createSlice({
         state.loading = false;
         state.error = null;
       })
-      .addCase(deleteTask.rejected, (state, action: PayloadAction<any>) => {
+      .addCase(deleteTask.rejected, (state, action: PayloadAction<unknown>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       });
   },
 });

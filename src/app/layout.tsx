@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Task Manager",
-  description: "A full-stack task management app",
+  description: "A client-side task management app prototype",
 };
 
 export default function RootLayout({

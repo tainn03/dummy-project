@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
-import { authApi } from "../../adapter/adapter";
+import { authApi, LoginResponse } from "../../adapter/adapter";
 
 // Define user type
 interface User {
@@ -38,8 +38,8 @@ export const login = createAsyncThunk(
       // Store token in localStorage
       localStorage.setItem("token", response.token);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to login");
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || "Failed to login");
     }
   }
 );
@@ -59,8 +59,8 @@ export const register = createAsyncThunk(
       // Store token in localStorage
       localStorage.setItem("token", response.token);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to register");
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || "Failed to register");
     }
   }
 );
@@ -73,8 +73,8 @@ export const logout = createAsyncThunk(
       // Remove token from localStorage
       localStorage.removeItem("token");
       return null;
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to logout");
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || "Failed to logout");
     }
   }
 );
@@ -92,8 +92,10 @@ export const changePassword = createAsyncThunk(
     try {
       await authApi.changePassword(currentPassword, newPassword, token);
       return null;
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Failed to change password");
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as Error).message || "Failed to change password"
+      );
     }
   }
 );
@@ -115,35 +117,41 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.error = null;
-      })
-      .addCase(login.rejected, (state, action: PayloadAction<any>) => {
+      .addCase(
+        login.fulfilled,
+        (state, action: PayloadAction<LoginResponse>) => {
+          state.loading = false;
+          state.isAuthenticated = true;
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+          state.error = null;
+        }
+      )
+      .addCase(login.rejected, (state, action: PayloadAction<unknown>) => {
         state.loading = false;
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
       // Register
       .addCase(register.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(register.fulfilled, (state, action: PayloadAction<any>) => {
+      .addCase(
+        register.fulfilled,
+        (state, action: PayloadAction<LoginResponse>) => {
+          state.loading = false;
+          state.isAuthenticated = true;
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+          state.error = null;
+        }
+      )
+      .addCase(register.rejected, (state, action: PayloadAction<unknown>) => {
         state.loading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.error = null;
-      })
-      .addCase(register.rejected, (state, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
       // Logout
       .addCase(logout.pending, (state) => {
@@ -157,9 +165,9 @@ const authSlice = createSlice({
         state.token = null;
         state.error = null;
       })
-      .addCase(logout.rejected, (state, action: PayloadAction<any>) => {
+      .addCase(logout.rejected, (state, action: PayloadAction<unknown>) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload as string;
       })
       // Change password
       .addCase(changePassword.pending, (state) => {
@@ -170,10 +178,13 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = null;
       })
-      .addCase(changePassword.rejected, (state, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.error = action.payload;
-      });
+      .addCase(
+        changePassword.rejected,
+        (state, action: PayloadAction<unknown>) => {
+          state.loading = false;
+          state.error = action.payload as string;
+        }
+      );
   },
 });
 

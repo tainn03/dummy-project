@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/molecules/AuthGuard";
 import Button from "@/components/atoms/Button";
 import StatusBadge from "@/components/atoms/StatusBadge";
-import { TASK_STATUS, TASK_STATUS_LABELS } from "@/constants/task";
+import { TASK_STATUS_LABELS } from "@/constants/task";
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();

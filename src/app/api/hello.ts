@@ -1,5 +1,8 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextResponse } from "next/server";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.status(200).json({ name: "Hello from Task Manager API!" });
+export function GET() {
+  return NextResponse.json({
+    name: "Hello from Task Manager API!",
+    message: "This is a client-side only prototype using mock data",
+  });
 }

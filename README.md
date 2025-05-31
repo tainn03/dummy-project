@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Task Manager Prototype
+
+This is a client-side only prototype of a task management application built with [Next.js](https://nextjs.org). It uses mock data to simulate backend functionality without requiring any actual server or database.
 
 ## Getting Started
 
@@ -34,3 +36,16 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Mock Data Implementation
+
+This prototype uses a client-side mock data implementation to simulate backend functionality. The key components are:
+
+- **Mock Data Adapter**: Located in `src/adapter/adapter.ts`, it provides mock implementations of all API endpoints
+- **Redux Integration**: The mock adapter is seamlessly integrated with Redux for state management
+- **Authentication**: Simulates user authentication with mock tokens and session handling
+- **Task Management**: Provides full CRUD functionality for tasks with local state persistence
+
+### Login Credentials
+
+For testing purposes, you can use any email address with the password `password` to log in.
