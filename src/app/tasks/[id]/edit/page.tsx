@@ -2,75 +2,76 @@
 
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { fetchTask, updateTask } from "@/redux/reducers/taskReducer";
 import { useRouter, useParams } from "next/navigation";
 import AuthGuard from "@/components/molecules/AuthGuard";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
 import Textarea from "@/components/atoms/Textarea";
 import Select from "@/components/atoms/Select";
-import { TASK_STATUS, TASK_STATUS_LABELS } from "@/constants/task";
-
-const schema = yup.object().shape({
-  title: yup.string().required("Title is required"),
-  description: yup.string(),
-  status: yup.string().oneOf(Object.values(TASK_STATUS)),
-  deadline: yup.string().nullable(),
-});
-
-type TaskFormInputs = {
-  title: string;
-  description?: string;
-  status?: string;
-  deadline?: string;
-};
+import { TaskStatus, TASK_STATUS_LABELS } from "@/constants/task";
+import { useTaskDetails, useUpdateTask } from "@/hooks/useTasks";
+import { UpdateTaskRequest } from "@/services/taskService";
 
 export default function EditTaskPage() {
-  const dispatch = useAppDispatch();
   const router = useRouter();
   const params = useParams();
-  const { token } = useAppSelector((state) => state.auth);
-  const { currentTask, loading, error } = useAppSelector((state) => state.task);
   const id = params?.id as string;
 
+  // Use React Query hooks for fetching and updating the task
+  const {
+    data: task,
+    isLoading: isFetchLoading,
+    error: fetchError,
+  } = useTaskDetails(id);
+  const updateMutation = useUpdateTask(id);
+
+  // Untyped form to avoid TypeScript complexity
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<TaskFormInputs>({
-    resolver: yupResolver(schema),
+  } = useForm({
+    defaultValues: {
+      title: "",
+      description: "",
+      status: TaskStatus.PENDING,
+      deadline: "",
+    },
   });
 
+  // Populate form when task data is fetched
   useEffect(() => {
-    if (token && id) {
-      dispatch(fetchTask({ id, token }));
+    if (task) {
+      setValue("title", task.title);
+      setValue("description", task.description || "");
+      setValue("status", task.status);
+      setValue("deadline", task.deadline ? task.deadline.split("T")[0] : "");
     }
-  }, [dispatch, token, id]);
+  }, [task, setValue]);
 
-  useEffect(() => {
-    if (currentTask) {
-      setValue("title", currentTask.title);
-      setValue("description", currentTask.description || "");
-      setValue("status", currentTask.status);
-      setValue(
-        "deadline",
-        currentTask.deadline ? currentTask.deadline.split("T")[0] : ""
-      );
-    }
-  }, [currentTask, setValue]);
+  const onSubmit = (data: {
+    title: string;
+    description?: string;
+    status: string;
+    deadline?: string;
+  }) => {
+    // Convert form data to match UpdateTaskRequest interface
+    const updateData: UpdateTaskRequest = {
+      title: data.title,
+      description: data.description || undefined,
+      status: data.status as TaskStatus,
+      deadline: data.deadline || undefined,
+    };
 
-  const onSubmit = async (data: TaskFormInputs) => {
-    if (token && id) {
-      await dispatch(updateTask({ id, task: data, token }));
-      router.push(`/tasks/${id}`);
-    }
+    updateMutation.mutate(updateData, {
+      onSuccess: () => {
+        router.push(`/tasks/${id}`);
+      },
+    });
   };
 
-  if (loading && !currentTask) {
+  if (isFetchLoading && !task) {
     return (
       <div className="flex items-center justify-center h-screen">
         Loading...
@@ -85,7 +86,7 @@ export default function EditTaskPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
             label="Title"
-            {...register("title")}
+            {...register("title", { required: "Title is required" })}
             error={errors.title?.message}
           />
           <Textarea
@@ -107,10 +108,30 @@ export default function EditTaskPage() {
             {...register("deadline")}
             error={errors.deadline?.message}
           />
-          {error && <div className="text-red-600 text-sm">{error}</div>}
-          <Button type="submit" variant="primary" isLoading={loading}>
-            Update Task
-          </Button>
+          {fetchError && (
+            <div className="text-red-600 text-sm">{fetchError.toString()}</div>
+          )}
+          {updateMutation.error && (
+            <div className="text-red-600 text-sm">
+              {updateMutation.error.toString()}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={updateMutation.isPending}
+            >
+              Update Task
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push(`/tasks/${id}`)}
+            >
+              Cancel
+            </Button>
+          </div>
         </form>
       </div>
     </AuthGuard>

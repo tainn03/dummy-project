@@ -4,28 +4,22 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { login, resetAuthError } from "@/redux/reducers/authReducer";
 import { useRouter } from "next/navigation";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
+import { useLogin } from "@/hooks/useAuth";
+import { LoginRequest } from "@/services/authService";
 
 const schema = yup.object().shape({
   email: yup.string().email("Invalid email").required("Email is required"),
   password: yup.string().required("Password is required"),
 });
 
-type LoginFormInputs = {
-  email: string;
-  password: string;
-};
+type LoginFormInputs = LoginRequest;
 
 export default function LoginPage() {
-  const dispatch = useAppDispatch();
   const router = useRouter();
-  const { isAuthenticated, loading, error } = useAppSelector(
-    (state) => state.auth
-  );
+  const { mutate: login, isPending: loading, error, isSuccess } = useLogin();
 
   const {
     register,
@@ -36,16 +30,19 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (isAuthenticated) {
+    // Check if the login was successful and redirect
+    if (isSuccess) {
       router.push("/dashboard");
     }
-    return () => {
-      dispatch(resetAuthError());
-    };
-  }, [isAuthenticated, router, dispatch]);
+    // Check if token already exists
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/dashboard");
+    }
+  }, [isSuccess, router]);
 
   const onSubmit = (data: LoginFormInputs) => {
-    dispatch(login(data));
+    login(data);
   };
 
   return (
@@ -70,7 +67,9 @@ export default function LoginPage() {
           error={errors.password?.message}
         />
         {error && (
-          <div className="text-red-600 text-sm text-center">{error}</div>
+          <div className="text-red-600 text-sm text-center">
+            {error instanceof Error ? error.message : "Login failed"}
+          </div>
         )}
         <Button
           type="submit"

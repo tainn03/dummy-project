@@ -1,32 +1,30 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { fetchTasks, setTaskFilters } from "@/redux/reducers/taskReducer";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/molecules/AuthGuard";
 import Button from "@/components/atoms/Button";
 import StatusBadge from "@/components/atoms/StatusBadge";
-import { TASK_STATUS_LABELS } from "@/constants/task";
+import { TaskStatus, TASK_STATUS_LABELS } from "@/constants/task";
+import { useTaskList } from "@/hooks/useTasks";
+import { TaskFilterParams, Task } from "@/services/taskService";
 
 export default function DashboardPage() {
-  const dispatch = useAppDispatch();
   const router = useRouter();
-  const { token } = useAppSelector((state) => state.auth);
-  const { tasks, loading, filters } = useAppSelector((state) => state.task);
 
-  useEffect(() => {
-    if (token) {
-      dispatch(
-        fetchTasks({
-          token,
-          status: filters.status || undefined,
-          sortBy: filters.sortBy,
-          sortDir: filters.sortDir,
-        })
-      );
-    }
-  }, [dispatch, token, filters.status, filters.sortBy, filters.sortDir]);
+  // Local state for filters - replacing Redux state
+  const [filters, setFilters] = useState<TaskFilterParams>({
+    sortBy: "createdAt",
+    sortDir: "desc",
+  });
+
+  // Use the React Query hook for fetching tasks with filters
+  const { data: tasks, isLoading } = useTaskList(filters);
+
+  // Handler for updating filter state
+  const updateFilter = (newFilterValues: Partial<TaskFilterParams>) => {
+    setFilters((prev) => ({ ...prev, ...newFilterValues }));
+  };
 
   return (
     <AuthGuard>
@@ -44,9 +42,13 @@ export default function DashboardPage() {
           <select
             className="border rounded px-3 py-2"
             value={filters.status || ""}
-            onChange={(e) =>
-              dispatch(setTaskFilters({ status: e.target.value || null }))
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              // Only set valid TaskStatus values or undefined
+              updateFilter({
+                status: value ? (value as TaskStatus) : undefined,
+              });
+            }}
           >
             <option value="">All Statuses</option>
             {Object.entries(TASK_STATUS_LABELS).map(([value, label]) => (
@@ -57,9 +59,11 @@ export default function DashboardPage() {
           </select>
           <select
             className="border rounded px-3 py-2"
-            value={filters.sortBy}
+            value={filters.sortBy || "createdAt"}
             onChange={(e) =>
-              dispatch(setTaskFilters({ sortBy: e.target.value }))
+              updateFilter({
+                sortBy: e.target.value as "createdAt" | "deadline",
+              })
             }
           >
             <option value="createdAt">Sort by Created</option>
@@ -67,11 +71,9 @@ export default function DashboardPage() {
           </select>
           <select
             className="border rounded px-3 py-2"
-            value={filters.sortDir}
+            value={filters.sortDir || "desc"}
             onChange={(e) =>
-              dispatch(
-                setTaskFilters({ sortDir: e.target.value as "asc" | "desc" })
-              )
+              updateFilter({ sortDir: e.target.value as "asc" | "desc" })
             }
           >
             <option value="desc">Descending</option>
@@ -89,20 +91,20 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {isLoading ? (
                 <tr>
                   <td colSpan={4} className="text-center py-8">
                     Loading...
                   </td>
                 </tr>
-              ) : tasks.length === 0 ? (
+              ) : !tasks || tasks.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="text-center py-8">
                     No tasks found.
                   </td>
                 </tr>
               ) : (
-                tasks.map((task) => (
+                tasks.map((task: Task) => (
                   <tr key={task.id} className="border-t">
                     <td
                       className="px-4 py-2 cursor-pointer hover:underline"

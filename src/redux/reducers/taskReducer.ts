@@ -1,3 +1,9 @@
+/**
+ * @deprecated This file is no longer used. Task management has been migrated to React Query.
+ * See the src/hooks/useTasks.ts file for the new implementation.
+ * This file is kept for reference until all functionality is confirmed to be working with React Query.
+ */
+
 import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import { taskApi } from "../../adapter/adapter";
 

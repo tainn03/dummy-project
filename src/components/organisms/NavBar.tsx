@@ -3,19 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { logout } from "@/redux/reducers/authReducer";
+import { useAuthState, useLogout } from "@/hooks/useAuth";
 import Button from "../atoms/Button";
 
 export default function NavBar() {
   const router = useRouter();
-  const dispatch = useAppDispatch();
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
+  const { user, isAuthenticated } = useAuthState();
+  const logout = useLogout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    await dispatch(logout());
-    router.push("/login");
+    logout.mutate();
   };
 
   return (
@@ -52,8 +50,13 @@ export default function NavBar() {
                 >
                   Profile
                 </Button>
-                <Button variant="primary" size="small" onClick={handleLogout}>
-                  Logout
+                <Button
+                  variant="primary"
+                  size="small"
+                  onClick={handleLogout}
+                  disabled={logout.isPending}
+                >
+                  {logout.isPending ? "Logging out..." : "Logout"}
                 </Button>
               </div>
             ) : (
@@ -123,8 +126,9 @@ export default function NavBar() {
               <button
                 className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium w-full text-left"
                 onClick={handleLogout}
+                disabled={logout.isPending}
               >
-                Logout
+                {logout.isPending ? "Logging out..." : "Logout"}
               </button>
             </div>
           ) : (

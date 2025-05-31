@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReduxProvider } from "@/components/molecules/ReduxProvider";
+import ReactQueryProvider from "@/components/molecules/ReactQueryProvider";
 import NavBar from "@/components/organisms/NavBar";
 
 const geistSans = Geist({
@@ -30,8 +31,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReduxProvider>
-          <NavBar />
-          {children}
+          <ReactQueryProvider>
+            <NavBar />
+            {children}
+          </ReactQueryProvider>
         </ReduxProvider>
       </body>
     </html>

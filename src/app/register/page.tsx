@@ -1,17 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import {
-  register as registerUser,
-  resetAuthError,
-} from "@/redux/reducers/authReducer";
+import { useRegister } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
+import { RegisterRequest } from "@/services/authService";
 
 const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
@@ -22,38 +19,39 @@ const schema = yup.object().shape({
     .required("Password is required"),
 });
 
-type RegisterFormInputs = {
-  name: string;
-  email: string;
-  password: string;
-};
+type RegisterFormInputs = RegisterRequest;
 
 export default function RegisterPage() {
-  const dispatch = useAppDispatch();
   const router = useRouter();
-  const { isAuthenticated, loading, error } = useAppSelector(
-    (state) => state.auth
-  );
+  const {
+    mutate: register,
+    isPending: loading,
+    error,
+    isSuccess,
+  } = useRegister();
 
   const {
-    register,
+    register: registerField,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormInputs>({
     resolver: yupResolver(schema),
   });
 
-  React.useEffect(() => {
-    if (isAuthenticated) {
+  useEffect(() => {
+    // Check if registration was successful and redirect
+    if (isSuccess) {
       router.push("/dashboard");
     }
-    return () => {
-      dispatch(resetAuthError());
-    };
-  }, [isAuthenticated, router, dispatch]);
+    // Check if token already exists
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/dashboard");
+    }
+  }, [isSuccess, router]);
 
   const onSubmit = (data: RegisterFormInputs) => {
-    dispatch(registerUser(data));
+    register(data);
   };
 
   return (
@@ -68,23 +66,25 @@ export default function RegisterPage() {
         <Input
           label="Name"
           type="text"
-          {...register("name")}
+          {...registerField("name")}
           error={errors.name?.message}
         />
         <Input
           label="Email"
           type="email"
-          {...register("email")}
+          {...registerField("email")}
           error={errors.email?.message}
         />
         <Input
           label="Password"
           type="password"
-          {...register("password")}
+          {...registerField("password")}
           error={errors.password?.message}
         />
         {error && (
-          <div className="text-red-600 text-sm text-center">{error}</div>
+          <div className="text-red-600 text-sm text-center">
+            {error instanceof Error ? error.message : "Registration failed"}
+          </div>
         )}
         <Button
           type="submit"

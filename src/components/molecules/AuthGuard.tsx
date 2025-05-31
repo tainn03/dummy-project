@@ -1,22 +1,32 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { useAppSelector } from "@/hooks/redux";
+import { useEffect, useState } from "react";
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+interface AuthGuardProps {
+  children: React.ReactNode;
+}
+
+export default function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
-  const { isAuthenticated, loading } = useAppSelector((state) => state.auth);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // If not authenticated and not loading, redirect to login
-    if (!isAuthenticated && !loading) {
-      router.push("/login");
-    }
-  }, [isAuthenticated, loading, router]);
+    // Check for token in localStorage
+    const token = localStorage.getItem("token");
 
-  // Show nothing while checking authentication
-  if (!isAuthenticated) {
+    if (!token) {
+      // No token found, redirect to login
+      setIsAuthenticated(false);
+      router.push("/login");
+    } else {
+      // Token found, assuming user is authenticated
+      setIsAuthenticated(true);
+    }
+  }, [router]);
+
+  // Show loading state while checking auth
+  if (isAuthenticated === null) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500 border-solid"></div>
@@ -24,5 +34,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // If not authenticated, the useEffect will redirect
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // User is authenticated, render children
   return <>{children}</>;
 }

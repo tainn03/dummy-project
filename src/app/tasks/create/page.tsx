@@ -2,52 +2,52 @@
 
 import React from "react";
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import { useAppDispatch, useAppSelector } from "@/hooks/redux";
-import { createTask } from "@/redux/reducers/taskReducer";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/molecules/AuthGuard";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
 import Textarea from "@/components/atoms/Textarea";
 import Select from "@/components/atoms/Select";
-import { TASK_STATUS, TASK_STATUS_LABELS } from "@/constants/task";
-
-const schema = yup.object().shape({
-  title: yup.string().required("Title is required"),
-  description: yup.string(),
-  status: yup.string().oneOf(Object.values(TASK_STATUS)),
-  deadline: yup.string().nullable(),
-});
-
-type TaskFormInputs = {
-  title: string;
-  description?: string;
-  status?: string;
-  deadline?: string;
-};
+import { TaskStatus, TASK_STATUS_LABELS } from "@/constants/task";
+import { useCreateTask } from "@/hooks/useTasks";
+import { CreateTaskRequest } from "@/services/taskService";
 
 export default function CreateTaskPage() {
-  const dispatch = useAppDispatch();
   const router = useRouter();
-  const { token } = useAppSelector((state) => state.auth);
-  const { loading, error } = useAppSelector((state) => state.task);
+  const createMutation = useCreateTask();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<TaskFormInputs>({
-    resolver: yupResolver(schema),
-    defaultValues: { status: TASK_STATUS.PENDING },
+  } = useForm({
+    defaultValues: {
+      title: "",
+      description: "",
+      status: TaskStatus.PENDING,
+      deadline: "",
+    },
   });
 
-  const onSubmit = async (data: TaskFormInputs) => {
-    if (token) {
-      await dispatch(createTask({ task: data, token }));
-      router.push("/dashboard");
-    }
+  const onSubmit = (data: {
+    title: string;
+    description?: string;
+    status: string;
+    deadline?: string;
+  }) => {
+    // Convert form data to match CreateTaskRequest interface
+    const createData: CreateTaskRequest = {
+      title: data.title,
+      description: data.description,
+      status: data.status as TaskStatus,
+      deadline: data.deadline,
+    };
+
+    createMutation.mutate(createData, {
+      onSuccess: () => {
+        router.push("/dashboard");
+      },
+    });
   };
 
   return (
@@ -57,7 +57,7 @@ export default function CreateTaskPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
             label="Title"
-            {...register("title")}
+            {...register("title", { required: "Title is required" })}
             error={errors.title?.message}
           />
           <Textarea
@@ -79,10 +79,27 @@ export default function CreateTaskPage() {
             {...register("deadline")}
             error={errors.deadline?.message}
           />
-          {error && <div className="text-red-600 text-sm">{error}</div>}
-          <Button type="submit" variant="primary" isLoading={loading}>
-            Create Task
-          </Button>
+          {createMutation.error && (
+            <div className="text-red-600 text-sm">
+              {createMutation.error.toString()}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={createMutation.isPending}
+            >
+              Create Task
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/dashboard")}
+            >
+              Cancel
+            </Button>
+          </div>
         </form>
       </div>
     </AuthGuard>
