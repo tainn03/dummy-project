@@ -35,8 +35,9 @@ export const login = createAsyncThunk(
   ) => {
     try {
       const response = await authApi.login(email, password);
-      // Store token in localStorage
+      // Store token and user in localStorage
       localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
       return response;
     } catch (error: unknown) {
       return rejectWithValue((error as Error).message || "Failed to login");
@@ -56,8 +57,9 @@ export const register = createAsyncThunk(
   ) => {
     try {
       const response = await authApi.register(name, email, password);
-      // Store token in localStorage
+      // Store token and user in localStorage
       localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
       return response;
     } catch (error: unknown) {
       return rejectWithValue((error as Error).message || "Failed to register");
@@ -70,8 +72,9 @@ export const logout = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await authApi.logout();
-      // Remove token from localStorage
+      // Remove token and user from localStorage
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
       return null;
     } catch (error: unknown) {
       return rejectWithValue((error as Error).message || "Failed to logout");
@@ -95,6 +98,40 @@ export const changePassword = createAsyncThunk(
     } catch (error: unknown) {
       return rejectWithValue(
         (error as Error).message || "Failed to change password"
+      );
+    }
+  }
+);
+
+// Check authentication status from localStorage
+export const checkAuthStatus = createAsyncThunk(
+  "auth/checkAuthStatus",
+  async (_, { rejectWithValue }) => {
+    try {
+      if (typeof window === "undefined") {
+        return null;
+      }
+
+      const token = localStorage.getItem("token");
+      const userStr = localStorage.getItem("user");
+
+      if (!token || !userStr) {
+        // No stored auth data
+        return null;
+      }
+
+      try {
+        const user = JSON.parse(userStr);
+        return { token, user };
+      } catch {
+        // Invalid stored data, clear it
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        return null;
+      }
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as Error).message || "Failed to check auth status"
       );
     }
   }
@@ -182,6 +219,36 @@ const authSlice = createSlice({
         changePassword.rejected,
         (state, action: PayloadAction<unknown>) => {
           state.loading = false;
+          state.error = action.payload as string;
+        }
+      )
+      // Check auth status
+      .addCase(checkAuthStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(checkAuthStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload) {
+          // Restore authentication state from localStorage
+          state.isAuthenticated = true;
+          state.user = action.payload.user;
+          state.token = action.payload.token;
+        } else {
+          // No stored auth data
+          state.isAuthenticated = false;
+          state.user = null;
+          state.token = null;
+        }
+        state.error = null;
+      })
+      .addCase(
+        checkAuthStatus.rejected,
+        (state, action: PayloadAction<unknown>) => {
+          state.loading = false;
+          state.isAuthenticated = false;
+          state.user = null;
+          state.token = null;
           state.error = action.payload as string;
         }
       );

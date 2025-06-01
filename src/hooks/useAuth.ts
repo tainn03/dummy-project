@@ -125,6 +125,7 @@ export const useAuthState = () => {
   // Get auth state from React Query cache
   const { data: user = null } = useQuery({
     queryKey: ["auth", "user"],
+    queryFn: () => getUserFromStorage(), // Fallback function to get user from localStorage
     enabled: initialized,
     staleTime: Infinity, // Don't refetch automatically
     gcTime: Infinity, // Never garbage collect this query
@@ -132,6 +133,12 @@ export const useAuthState = () => {
 
   const { data: isAuthenticated = false } = useQuery({
     queryKey: ["auth", "isAuthenticated"],
+    queryFn: () => {
+      // Fallback function to check authentication from localStorage
+      const token = localStorage.getItem("token");
+      const user = getUserFromStorage();
+      return !!token && !!user;
+    },
     enabled: initialized,
     staleTime: Infinity,
     gcTime: Infinity,

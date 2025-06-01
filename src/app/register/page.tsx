@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
 import { RegisterRequest } from "@/services/authService";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
 
 const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
@@ -30,6 +31,12 @@ export default function RegisterPage() {
     isSuccess,
   } = useRegister();
 
+  // Use auth guard to redirect authenticated users
+  const { isAuthenticated, isReady } = useAuthGuard({
+    requireAuth: false,
+    redirectTo: "/dashboard",
+  });
+
   const {
     register: registerField,
     handleSubmit,
@@ -43,12 +50,24 @@ export default function RegisterPage() {
     if (isSuccess) {
       router.push("/dashboard");
     }
-    // Check if token already exists
-    const token = localStorage.getItem("token");
-    if (token) {
-      router.push("/dashboard");
-    }
   }, [isSuccess, router]);
+
+  // Show loading while checking auth status
+  if (!isReady) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500 border-solid"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is authenticated, the auth guard will handle redirect
+  if (isAuthenticated) {
+    return null;
+  }
 
   const onSubmit = (data: RegisterFormInputs) => {
     register(data);
