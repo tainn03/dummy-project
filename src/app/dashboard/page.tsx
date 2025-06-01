@@ -104,7 +104,7 @@ export default function DashboardPage() {
                   </td>
                 </tr>
               ) : (
-                tasks.map((task: Task) => (
+                tasks?.map((task: Task) => (
                   <tr key={task.id} className="border-t">
                     <td
                       className="px-4 py-2 cursor-pointer hover:underline"

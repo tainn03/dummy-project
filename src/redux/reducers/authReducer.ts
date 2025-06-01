@@ -125,8 +125,8 @@ export const checkAuthStatus = createAsyncThunk(
         return { token, user };
       } catch {
         // Invalid stored data, clear it
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        // localStorage.removeItem("token");
+        // localStorage.removeItem("user");
         return null;
       }
     } catch (error: unknown) {

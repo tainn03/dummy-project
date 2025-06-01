@@ -1,5 +1,5 @@
-import { API_BASE_URL, handleApiResponse, getAuthHeaders } from "./api";
 import { TaskStatus } from "@/constants/task";
+import { taskApi } from "@/adapter/adapter";
 
 export interface Task {
   id: string;
@@ -42,45 +42,22 @@ export const taskService = {
     token: string,
     filters?: TaskFilterParams
   ): Promise<Task[]> => {
-    // Build query string from filters
-    const queryParams = new URLSearchParams();
-    if (filters?.status) queryParams.append("status", filters.status);
-    if (filters?.sortBy) queryParams.append("sortBy", filters.sortBy);
-    if (filters?.sortDir) queryParams.append("sortDir", filters.sortDir);
-
-    const response = await fetch(
-      `${API_BASE_URL}/tasks?${queryParams.toString()}`,
-      {
-        method: "GET",
-        headers: getAuthHeaders(token),
-        credentials: "include",
-      }
-    );
-
-    return handleApiResponse<Task[]>(response);
+    return taskApi.getTasks(
+      token,
+      filters?.status,
+      filters?.sortBy,
+      filters?.sortDir
+    ) as Promise<Task[]>;
   },
 
   // Get task by ID
   getTaskById: async (id: string, token: string): Promise<Task> => {
-    const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-      method: "GET",
-      headers: getAuthHeaders(token),
-      credentials: "include",
-    });
-
-    return handleApiResponse<Task>(response);
+    return taskApi.getTask(id, token) as Promise<Task>;
   },
 
   // Create new task
   createTask: async (task: CreateTaskRequest, token: string): Promise<Task> => {
-    const response = await fetch(`${API_BASE_URL}/tasks`, {
-      method: "POST",
-      headers: getAuthHeaders(token),
-      credentials: "include",
-      body: JSON.stringify(task),
-    });
-
-    return handleApiResponse<Task>(response);
+    return taskApi.createTask(task, token) as Promise<Task>;
   },
 
   // Update task
@@ -89,24 +66,11 @@ export const taskService = {
     task: UpdateTaskRequest,
     token: string
   ): Promise<Task> => {
-    const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-      method: "PUT",
-      headers: getAuthHeaders(token),
-      credentials: "include",
-      body: JSON.stringify(task),
-    });
-
-    return handleApiResponse<Task>(response);
+    return taskApi.updateTask(id, task, token) as Promise<Task>;
   },
 
   // Delete task
   deleteTask: async (id: string, token: string): Promise<void> => {
-    const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-      method: "DELETE",
-      headers: getAuthHeaders(token),
-      credentials: "include",
-    });
-
-    await handleApiResponse<void>(response);
+    return taskApi.deleteTask(id, token);
   },
 };

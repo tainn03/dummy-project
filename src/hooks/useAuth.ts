@@ -82,8 +82,8 @@ export const useLogout = (): UseMutationResult<void, Error, void, unknown> => {
     mutationFn: authService.logout,
     onSuccess: () => {
       // Remove token and user from localStorage
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      // localStorage.removeItem("token");
+      // localStorage.removeItem("user");
 
       // Update auth state in cache
       queryClient.setQueryData(["auth", "user"], null);
